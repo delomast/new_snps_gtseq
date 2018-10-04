@@ -163,8 +163,3 @@ def Main():
 	probeseq_out.close()
 	
 Main()
-
-#Filter out loci that are amplifying two non-homologous sequences
-#without removing indels
-#find indels specifically and stop probes from being highly variable?
-##add variation to probes of indels on an allele specific basis
