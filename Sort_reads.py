@@ -3,9 +3,10 @@
 ##requires fastq files form all individuals to be in one folder and to be named: individualname.fastq
 ##requires giving the file path to the probeseq in the terminal
 ##optional multiprocessing - give the number of threads you want to use (default is 1)
+## differentiates het's and hom's by ratio of read counts, (top depth) / (second top depth) with hets having the ratio less than or equal to het_ratio (default is 10)
+##		specify het_ratio using the -r flag on the command line
 #sorts reads in each individual fastq by fwd primer (from probeseq), 
-#determines top two sequences (haplotypes) with highest depth, outputs both if ratio of depths is < 15 (heterozygote), else outputs only top sequence (homozygote),
-#uses ratio of 15 b/c GT-seq uses ratio of 10 and there is some wiggle room with allele corr values
+#determines top two sequences (haplotypes) with highest depth, outputs both if ratio of depths is < het_ratio (heterozygote), else outputs only top sequence (homozygote),
 #writes a tab-sep-value file "all_haplotypes.txt" containing individualname	locusname	haplotype_1	depth_1	haplotype_2	depth_2
 #in terminal type: python Sort_reads.py -ps file/path/to_probeseq.csv -t number_of_threads
 
@@ -13,7 +14,7 @@ from Bio import SeqIO
 import re, glob, sys
 from multiprocessing import Process, Queue
 
-def Sort(queue, samples, name_fwd):
+def Sort(queue, samples, name_fwd, het_ratio):
 	haplo_process = []
 	for indiv in samples:
 		haplo_indiv = []
@@ -36,7 +37,7 @@ def Sort(queue, samples, name_fwd):
 					first = [sequence, unique[sequence]]
 				elif unique[sequence] > second[1]:
 					second = [sequence, unique[sequence]]
-			if first[1]/second[1] < 15:							#heterozygous
+			if first[1]/second[1] <= het_ratio:							#heterozygous
 				haplo_indiv.append([marker, first[0], first[1], second[0], second[1]])
 			else:
 				haplo_indiv.append([marker, first[0], first[1], first[0], first[1]])	#if homozygous, write same sequence twice, in order to make reading 
@@ -54,12 +55,15 @@ def Main():
 	
 	threads = 1	#default values if no value is given
 	ps_file = 'no_input'
+	ratio = 10
 		
 	for flag in range(1, len(sys.argv), 1):	#start at 1 b/c 0 is name of script
 		if sys.argv[flag] == '-t':
 			threads = int(sys.argv[flag + 1])
 		if sys.argv[flag] == '-ps':
 			ps_file = sys.argv[flag + 1]
+		if sys.argv[flag] == '-r':
+			ratio = float(sys.argv[flag + 1])
 
 	
 	#read in probeseq
@@ -97,7 +101,7 @@ def Main():
 	queues = {}
 	for i in thread_dict:
 		queues[i] = Queue()
-		processes[i] = Process(target=Sort, args=(queues[i], thread_dict[i], markers))
+		processes[i] = Process(target=Sort, args=(queues[i], thread_dict[i], markers, ratio))
 		processes[i].start()
 	
 	#get returned haplotypes and depths
