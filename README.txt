@@ -13,8 +13,8 @@ First, you need to run GT-seq with the primer mix and a group of the samples fro
 separate FASTQ files for each individual, named samplename.fastq, and placed in one directory. Save all scripts to this directory as well.
 
 The first script (Sort_reads.py) will sort through the reads for each individual and group all the reads by the forward primer (from the probeseq file you specify)
-that they contain. It then finds the two unique sequences with highest read count in each individual/forward primer combination. If the ratio of read counts between these is greater 
-than 15, it considers the individual homozygous for the more common haplotype, if under 15, it considers the individual heterozygous. All haplotypes for
+that they contain. It then finds the two unique sequences with highest read count in each individual/forward primer combination. If the ratio of read counts between these (higher read count / lower read count) is greater 
+than the specified het_ratio (default is 10), it considers the individual homozygous for the more common haplotype, if less or equal, it considers the individual heterozygous. All haplotypes for
 all loci for all individuals are output in "all_haplotypes.txt", which is used by the second and third scripts.
 
 The second script (Find_snps.py) compares all of the haplotypes within each locus, and determines where there are differences (considered as potential SNPs) within the 
@@ -42,10 +42,11 @@ Specific explanations of all the options for the three scripts are below.
 
 #############################
 
-python Sort_reads.py -ps file/path/to_probeseq.csv -t number_of_threads
+python Sort_reads.py -ps file/path/to_probeseq.csv -t number_of_threads -r het_ratio
 	-ps give the file path to the probeseq file for the GT-seq panel you are using to find new SNPs. The script will use the locus name and the forward
 			primer in the probeseq file.
 	-t give the number of threads you would like the program to use, if you want to use multiple threads (default: 1)
+	-r give the ratio of read counts used to determine if a sample is homozygous or heterozygous 
 
 
 python Find_snps.py -min_prop min_proportion_of_samples_with_haplotypes -min_maf min_minor_allele_frequency -min_depth min_depth_for_calling_haplotypes
