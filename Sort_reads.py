@@ -83,7 +83,7 @@ def Main():
 	markers = {}
 	try:
 		for line in open(ps_file, 'r'):
-			separated = line.split(",")
+			separated = line.rstrip().split(",")
 			markers[separated[0]] = separated[5]
 	except:
 		print('Could not open probeseq specified. Exiting')
